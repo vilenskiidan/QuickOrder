@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickOrder - Food Ordering System</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #f1f5f9; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .container { text-align: center; padding: 40px 20px; max-width: 480px; width: 100%; }
+    h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 8px; background: linear-gradient(135deg, #f97316, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { color: #94a3b8; margin-bottom: 48px; font-size: 1.1rem; }
+    .card { background: #1e293b; border-radius: 16px; padding: 32px; margin-bottom: 20px; border: 1px solid #334155; cursor: pointer; transition: all 0.2s; }
+    .card:hover { border-color: #f97316; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(249,115,22,0.15); }
+    .card-emoji { font-size: 3rem; margin-bottom: 16px; }
+    .card h2 { font-size: 1.3rem; margin-bottom: 8px; color: #f1f5f9; }
+    .card p { color: #94a3b8; font-size: 0.95rem; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #f97316, #ef4444); color: white; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 1rem; border: none; cursor: pointer; width: 100%; margin-top: 16px; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.9; }
+    input { width: 100%; padding: 12px 16px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: #f1f5f9; font-size: 1rem; margin-top: 16px; }
+    input:focus { outline: none; border-color: #f97316; }
+    .or { color: #475569; margin: 24px 0; font-size: 0.9rem; position: relative; }
+    .or::before, .or::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: #334155; }
+    .or::before { left: 0; }
+    .or::after { right: 0; }
+    #join-section { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>QuickOrder</h1>
+    <p class="subtitle">Real-time restaurant ordering</p>
+
+    <div class="card" onclick="document.getElementById('restaurant-section').style.display='block'; this.style.display='none'">
+      <div class="card-emoji">🍽️</div>
+      <h2>I'm a Restaurant</h2>
+      <p>Create your restaurant dashboard and get a shareable order link</p>
+    </div>
+
+    <div id="restaurant-section" style="display:none; background:#1e293b; border-radius:16px; padding:32px; border:1px solid #334155;">
+      <div class="card-emoji">🍽️</div>
+      <h2 style="margin-bottom:8px;">Set Up Your Restaurant</h2>
+      <input id="rest-name" type="text" placeholder="Restaurant name (e.g. Mario's Pizza)" />
+      <button class="btn" onclick="createRestaurant()">Create & Open Dashboard</button>
+    </div>
+
+    <div class="or">or</div>
+
+    <div class="card" onclick="document.getElementById('join-section').style.display='block'; this.style.display='none'">
+      <div class="card-emoji">🛒</div>
+      <h2>I want to Order</h2>
+      <p>Enter the restaurant code to browse the menu and place an order</p>
+    </div>
+
+    <div id="join-section" style="display:none; background:#1e293b; border-radius:16px; padding:32px; border:1px solid #334155;">
+      <div class="card-emoji">🛒</div>
+      <h2 style="margin-bottom:8px;">Enter Restaurant Code</h2>
+      <input id="rest-code" type="text" placeholder="Restaurant code (e.g. a1b2c3d4)" style="text-transform:uppercase;" />
+      <button class="btn" onclick="joinOrder()">Browse Menu</button>
+    </div>
+  </div>
+
+  <script>
+    async function createRestaurant() {
+      const name = document.getElementById('rest-name').value.trim() || 'My Restaurant';
+      const res = await fetch('/api/restaurant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      const data = await res.json();
+      window.location.href = `/restaurant.html?id=${data.id}`;
+    }
+
+    function joinOrder() {
+      const code = document.getElementById('rest-code').value.trim().toLowerCase();
+      if (!code) return alert('Please enter a restaurant code');
+      window.location.href = `/order.html?r=${code}`;
+    }
+  </script>
+</body>
+</html>
