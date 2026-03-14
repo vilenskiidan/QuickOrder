@@ -14,20 +14,48 @@ app.use(express.json());
 // In-memory store: restaurantId -> { name, menu, orders[] }
 const restaurants = {};
 
-// Create/get a restaurant session
+// Register a new restaurant
 app.post('/api/restaurant', (req, res) => {
-  const { name, menu } = req.body;
+  const { name } = req.body;
   const id = crypto.randomBytes(4).toString('hex');
-  restaurants[id] = { id, name: name || 'My Restaurant', menu: menu || defaultMenu, orders: [] };
+  restaurants[id] = { id, name: name || 'My Restaurant', menu: [], orders: [] };
   res.json({ id, ...restaurants[id] });
 });
 
+// Get restaurant by ID (also used for login)
 app.get('/api/restaurant/:id', (req, res) => {
   const r = restaurants[req.params.id];
   if (!r) return res.status(404).json({ error: 'Restaurant not found' });
   res.json(r);
 });
 
+// Add a dish to the menu
+app.post('/api/restaurant/:id/menu', (req, res) => {
+  const r = restaurants[req.params.id];
+  if (!r) return res.status(404).json({ error: 'Restaurant not found' });
+  const { name, description, price } = req.body;
+  if (!name) return res.status(400).json({ error: 'Dish name is required' });
+  const item = {
+    id: Date.now(),
+    name: name.trim(),
+    description: (description || '').trim(),
+    price: parseFloat(price) || 0,
+    emoji: '🍽️'
+  };
+  r.menu.push(item);
+  res.json(item);
+});
+
+// Delete a dish from the menu
+app.delete('/api/restaurant/:id/menu/:itemId', (req, res) => {
+  const r = restaurants[req.params.id];
+  if (!r) return res.status(404).json({ error: 'Restaurant not found' });
+  const itemId = parseInt(req.params.itemId);
+  r.menu = r.menu.filter(i => i.id !== itemId);
+  res.json({ success: true });
+});
+
+// Place an order
 app.post('/api/order/:restaurantId', (req, res) => {
   const r = restaurants[req.params.restaurantId];
   if (!r) return res.status(404).json({ error: 'Restaurant not found' });
@@ -42,7 +70,6 @@ app.post('/api/order/:restaurantId', (req, res) => {
   };
 
   r.orders.push(order);
-  // Push to restaurant's socket room
   io.to(`restaurant:${req.params.restaurantId}`).emit('new_order', order);
   res.json({ success: true, orderId: order.id });
 });
@@ -63,17 +90,6 @@ io.on('connection', (socket) => {
     }
   });
 });
-
-const defaultMenu = [
-  { id: 1, name: 'Margherita Pizza', price: 12, category: 'Pizza', emoji: '🍕' },
-  { id: 2, name: 'Pepperoni Pizza', price: 14, category: 'Pizza', emoji: '🍕' },
-  { id: 3, name: 'Caesar Salad', price: 9, category: 'Salads', emoji: '🥗' },
-  { id: 4, name: 'Greek Salad', price: 8, category: 'Salads', emoji: '🥗' },
-  { id: 5, name: 'Cheeseburger', price: 13, category: 'Burgers', emoji: '🍔' },
-  { id: 6, name: 'Veggie Burger', price: 11, category: 'Burgers', emoji: '🍔' },
-  { id: 7, name: 'Cola', price: 3, category: 'Drinks', emoji: '🥤' },
-  { id: 8, name: 'Lemonade', price: 4, category: 'Drinks', emoji: '🍋' },
-];
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
