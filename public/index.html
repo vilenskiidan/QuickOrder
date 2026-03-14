@@ -3,79 +3,125 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QuickOrder - Food Ordering System</title>
+  <title>QuickOrder - Register Your Restaurant</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #f1f5f9; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .container { text-align: center; padding: 40px 20px; max-width: 480px; width: 100%; }
-    h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 8px; background: linear-gradient(135deg, #f97316, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .subtitle { color: #94a3b8; margin-bottom: 48px; font-size: 1.1rem; }
-    .card { background: #1e293b; border-radius: 16px; padding: 32px; margin-bottom: 20px; border: 1px solid #334155; cursor: pointer; transition: all 0.2s; }
-    .card:hover { border-color: #f97316; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(249,115,22,0.15); }
-    .card-emoji { font-size: 3rem; margin-bottom: 16px; }
-    .card h2 { font-size: 1.3rem; margin-bottom: 8px; color: #f1f5f9; }
-    .card p { color: #94a3b8; font-size: 0.95rem; }
-    .btn { display: inline-block; background: linear-gradient(135deg, #f97316, #ef4444); color: white; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 1rem; border: none; cursor: pointer; width: 100%; margin-top: 16px; transition: opacity 0.2s; }
-    .btn:hover { opacity: 0.9; }
-    input { width: 100%; padding: 12px 16px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: #f1f5f9; font-size: 1rem; margin-top: 16px; }
+    .container { padding: 40px 20px; max-width: 440px; width: 100%; }
+    .logo-wrap { text-align: center; margin-bottom: 40px; }
+    h1 { font-size: 2.4rem; font-weight: 800; background: linear-gradient(135deg, #f97316, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; }
+    .tagline { color: #64748b; font-size: 0.95rem; }
+    .card { background: #1e293b; border-radius: 16px; padding: 32px; border: 1px solid #334155; }
+    .card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
+    .card-subtitle { color: #64748b; font-size: 0.88rem; margin-bottom: 24px; }
+    input { width: 100%; padding: 12px 16px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: #f1f5f9; font-size: 1rem; margin-bottom: 12px; }
     input:focus { outline: none; border-color: #f97316; }
-    .or { color: #475569; margin: 24px 0; font-size: 0.9rem; position: relative; }
-    .or::before, .or::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: #334155; }
-    .or::before { left: 0; }
-    .or::after { right: 0; }
-    #join-section { display: none; }
+    input::placeholder { color: #475569; }
+    .btn { display: block; width: 100%; background: linear-gradient(135deg, #f97316, #ef4444); color: white; padding: 13px; border-radius: 10px; font-weight: 700; font-size: 1rem; border: none; cursor: pointer; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.88; }
+    .btn-ghost { background: transparent; border: 1px solid #334155; color: #94a3b8; }
+    .btn-ghost:hover { border-color: #f97316; color: #f97316; opacity: 1; }
+    .divider { display: flex; align-items: center; gap: 12px; margin: 28px 0; }
+    .divider-line { flex: 1; height: 1px; background: #334155; }
+    .divider-text { color: #475569; font-size: 0.85rem; white-space: nowrap; }
+    .error-msg { color: #ef4444; font-size: 0.85rem; margin-bottom: 10px; display: none; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>QuickOrder</h1>
-    <p class="subtitle">Real-time restaurant ordering</p>
-
-    <div class="card" onclick="document.getElementById('restaurant-section').style.display='block'; this.style.display='none'">
-      <div class="card-emoji">🍽️</div>
-      <h2>I'm a Restaurant</h2>
-      <p>Create your restaurant dashboard and get a shareable order link</p>
+    <div class="logo-wrap">
+      <h1>QuickOrder</h1>
+      <p class="tagline">Real-time restaurant ordering</p>
     </div>
 
-    <div id="restaurant-section" style="display:none; background:#1e293b; border-radius:16px; padding:32px; border:1px solid #334155;">
-      <div class="card-emoji">🍽️</div>
-      <h2 style="margin-bottom:8px;">Set Up Your Restaurant</h2>
-      <input id="rest-name" type="text" placeholder="Restaurant name (e.g. Mario's Pizza)" />
-      <button class="btn" onclick="createRestaurant()">Create & Open Dashboard</button>
+    <!-- Register -->
+    <div class="card">
+      <div class="card-title">Register Your Restaurant</div>
+      <div class="card-subtitle">Create your restaurant dashboard and get a shareable QR code</div>
+      <div class="error-msg" id="reg-error"></div>
+      <input id="reg-name" type="text" placeholder="Restaurant name (e.g. Mario's Pizza)" maxlength="60" />
+      <button class="btn" id="reg-btn" onclick="createRestaurant()">Create Dashboard</button>
     </div>
 
-    <div class="or">or</div>
-
-    <div class="card" onclick="document.getElementById('join-section').style.display='block'; this.style.display='none'">
-      <div class="card-emoji">🛒</div>
-      <h2>I want to Order</h2>
-      <p>Enter the restaurant code to browse the menu and place an order</p>
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-text">Already registered?</div>
+      <div class="divider-line"></div>
     </div>
 
-    <div id="join-section" style="display:none; background:#1e293b; border-radius:16px; padding:32px; border:1px solid #334155;">
-      <div class="card-emoji">🛒</div>
-      <h2 style="margin-bottom:8px;">Enter Restaurant Code</h2>
-      <input id="rest-code" type="text" placeholder="Restaurant code (e.g. a1b2c3d4)" style="text-transform:uppercase;" />
-      <button class="btn" onclick="joinOrder()">Browse Menu</button>
+    <!-- Login -->
+    <div class="card">
+      <div class="card-title">Login to Your Dashboard</div>
+      <div class="card-subtitle">Enter your restaurant code to get back to your dashboard</div>
+      <div class="error-msg" id="login-error"></div>
+      <input id="login-code" type="text" placeholder="Restaurant code (e.g. a1b2c3d4)" maxlength="8" style="text-transform:uppercase; letter-spacing:2px;" />
+      <button class="btn btn-ghost" id="login-btn" onclick="loginRestaurant()">Open Dashboard</button>
     </div>
   </div>
 
   <script>
+    // Allow Enter key
+    document.getElementById('reg-name').addEventListener('keydown', e => { if (e.key === 'Enter') createRestaurant(); });
+    document.getElementById('login-code').addEventListener('keydown', e => { if (e.key === 'Enter') loginRestaurant(); });
+
     async function createRestaurant() {
-      const name = document.getElementById('rest-name').value.trim() || 'My Restaurant';
-      const res = await fetch('/api/restaurant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
-      });
-      const data = await res.json();
-      window.location.href = `/restaurant.html?id=${data.id}`;
+      const name = document.getElementById('reg-name').value.trim();
+      if (!name) {
+        showError('reg-error', 'Please enter your restaurant name.');
+        return;
+      }
+      const btn = document.getElementById('reg-btn');
+      btn.innerHTML = '<span class="spinner"></span>Creating...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/restaurant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        const data = await res.json();
+        window.location.href = `/restaurant.html?id=${data.id}`;
+      } catch (e) {
+        showError('reg-error', 'Something went wrong. Try again.');
+        btn.innerHTML = 'Create Dashboard';
+        btn.disabled = false;
+      }
     }
 
-    function joinOrder() {
-      const code = document.getElementById('rest-code').value.trim().toLowerCase();
-      if (!code) return alert('Please enter a restaurant code');
-      window.location.href = `/order.html?r=${code}`;
+    async function loginRestaurant() {
+      const code = document.getElementById('login-code').value.trim().toLowerCase();
+      if (!code) {
+        showError('login-error', 'Please enter your restaurant code.');
+        return;
+      }
+      const btn = document.getElementById('login-btn');
+      btn.innerHTML = '<span class="spinner"></span>Loading...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/restaurant/${code}`);
+        if (!res.ok) {
+          showError('login-error', 'Restaurant not found. Check your code.');
+          btn.innerHTML = 'Open Dashboard';
+          btn.disabled = false;
+          return;
+        }
+        window.location.href = `/restaurant.html?id=${code}`;
+      } catch (e) {
+        showError('login-error', 'Something went wrong. Try again.');
+        btn.innerHTML = 'Open Dashboard';
+        btn.disabled = false;
+      }
+    }
+
+    function showError(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 4000);
     }
   </script>
 </body>
