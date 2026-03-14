@@ -13,15 +13,12 @@
     .main { padding: 24px; max-width: 900px; margin: 0 auto; }
     h1 { font-size: 1.8rem; margin-bottom: 4px; }
     .subtitle { color: #64748b; margin-bottom: 32px; }
-    .category-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 24px; }
-    .cat-tab { background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 6px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 0.9rem; transition: all 0.15s; }
-    .cat-tab.active { background: #f97316; border-color: #f97316; color: white; }
-    .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-    .menu-item { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; transition: all 0.2s; }
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .menu-item { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; transition: all 0.2s; display: flex; flex-direction: column; }
     .menu-item:hover { border-color: #f97316; }
-    .item-emoji { font-size: 2.5rem; margin-bottom: 10px; }
-    .item-name { font-weight: 600; margin-bottom: 4px; }
-    .item-price { color: #f97316; font-weight: 700; margin-bottom: 14px; }
+    .item-name { font-weight: 600; font-size: 1rem; margin-bottom: 6px; }
+    .item-desc { color: #64748b; font-size: 0.82rem; margin-bottom: 10px; line-height: 1.4; flex: 1; }
+    .item-price { color: #f97316; font-weight: 700; font-size: 0.95rem; margin-bottom: 14px; }
     .add-btn { background: #f97316; border: none; color: white; padding: 8px 0; border-radius: 8px; cursor: pointer; font-weight: 700; width: 100%; font-size: 0.9rem; }
     .qty-ctrl { display: flex; align-items: center; gap: 0; width: 100%; }
     .qty-btn { background: #334155; border: none; color: white; padding: 8px 14px; cursor: pointer; font-size: 1rem; flex: 1; }
@@ -49,6 +46,11 @@
     .order-btn { background: linear-gradient(135deg, #f97316, #ef4444); border: none; color: white; padding: 14px; border-radius: 10px; font-weight: 700; width: 100%; font-size: 1rem; cursor: pointer; }
     .order-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .empty-cart { text-align: center; padding: 40px 20px; color: #475569; }
+    /* Empty menu */
+    .empty-menu { text-align: center; padding: 80px 20px; }
+    .empty-menu-icon { font-size: 4rem; margin-bottom: 20px; }
+    .empty-menu h2 { font-size: 1.3rem; margin-bottom: 8px; color: #f1f5f9; }
+    .empty-menu p { color: #475569; }
     /* Success screen */
     .success { display: none; position: fixed; inset: 0; background: #0f172a; z-index: 50; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; }
     .success.show { display: flex; }
@@ -69,8 +71,6 @@
   <div class="main">
     <h1 id="rest-name">Loading...</h1>
     <p class="subtitle" id="rest-subtitle">Browse the menu and add items to your cart</p>
-
-    <div class="category-tabs" id="cat-tabs"></div>
     <div class="menu-grid" id="menu-grid"></div>
   </div>
 
@@ -106,7 +106,6 @@
 
     let menu = [];
     let cart = {};
-    let activeCategory = 'all';
 
     async function loadMenu() {
       const res = await fetch(`/api/restaurant/${restaurantId}`);
@@ -115,33 +114,27 @@
       menu = data.menu || [];
       document.getElementById('rest-name').textContent = data.name;
       document.title = `${data.name} - Order`;
-      renderCategories();
-      renderMenu();
-    }
-
-    function renderCategories() {
-      const cats = ['All', ...new Set(menu.map(i => i.category))];
-      document.getElementById('cat-tabs').innerHTML = cats.map(c =>
-        `<button class="cat-tab ${c === 'All' ? 'active' : ''}" onclick="setCategory('${c}', this)">${c}</button>`
-      ).join('');
-    }
-
-    function setCategory(cat, btn) {
-      activeCategory = cat.toLowerCase();
-      document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
       renderMenu();
     }
 
     function renderMenu() {
-      const filtered = activeCategory === 'all' ? menu : menu.filter(i => i.category.toLowerCase() === activeCategory);
-      document.getElementById('menu-grid').innerHTML = filtered.map(item => {
+      const grid = document.getElementById('menu-grid');
+      if (!menu.length) {
+        grid.innerHTML = `
+          <div class="empty-menu" style="grid-column:1/-1;">
+            <div class="empty-menu-icon">🍽️</div>
+            <h2>Menu coming soon</h2>
+            <p>The restaurant hasn't added any dishes yet.<br>Check back shortly!</p>
+          </div>`;
+        return;
+      }
+      grid.innerHTML = menu.map(item => {
         const qty = cart[item.id]?.qty || 0;
         return `
           <div class="menu-item">
-            <div class="item-emoji">${item.emoji || '🍽️'}</div>
-            <div class="item-name">${item.name}</div>
-            <div class="item-price">$${item.price.toFixed(2)}</div>
+            <div class="item-name">${escHtml(item.name)}</div>
+            ${item.description ? `<div class="item-desc">${escHtml(item.description)}</div>` : '<div class="item-desc"></div>'}
+            <div class="item-price">${item.price ? '$' + item.price.toFixed(2) : 'Free'}</div>
             ${qty === 0
               ? `<button class="add-btn" onclick="addToCart(${item.id})">Add to cart</button>`
               : `<div class="qty-ctrl">
@@ -183,12 +176,18 @@
       list.innerHTML = items.map(item => `
         <div class="cart-item">
           <div class="cart-item-info">
-            <div class="cart-item-name">${item.emoji} ${item.name}</div>
+            <div class="cart-item-name">${escHtml(item.name)}</div>
             <div class="cart-item-qty">× ${item.qty}</div>
             <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
           </div>
-          <button class="remove-item" onclick="changeQty(${item.id}, -${item.qty}); updateCart();">🗑</button>
+          <button class="remove-item" onclick="removeFromCart(${item.id})">🗑</button>
         </div>`).join('');
+    }
+
+    function removeFromCart(id) {
+      delete cart[id];
+      updateCart();
+      renderMenu();
     }
 
     function openCart() {
@@ -214,7 +213,11 @@
       const res = await fetch(`/api/order/${restaurantId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: items.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty, emoji: i.emoji })), customerName: name, note })
+        body: JSON.stringify({
+          items: items.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
+          customerName: name,
+          note
+        })
       });
       const data = await res.json();
       if (data.success) {
@@ -235,6 +238,10 @@
       document.getElementById('success').classList.remove('show');
       document.getElementById('customer-name').value = '';
       document.getElementById('order-note').value = '';
+    }
+
+    function escHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
     loadMenu();
